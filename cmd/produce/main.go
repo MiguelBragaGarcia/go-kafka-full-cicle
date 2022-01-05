@@ -9,14 +9,25 @@ import (
 // Importação está bugada
 
 func main() {
+	deliveryChan := make(chan kafka.Event)
+
+
 	producer := NewKafkaProducer()
-	Publish(msg:"Mensagem", topic:"teste", producer, key:nil)
+	Publish("Mensagem", "teste", producer, nil, deliveryChan)
+
+	e := <-deliveryChan
+	msg := e.(*kafka.Message)
+	if msg.TopicPartition.Error != nil {
+		fmt.Println("Erro ao enviar")
+	}else {
+		fmt.Println("Mensagem enviada:", msg.TopicPartition.)
+	}
 	producer.Flush(1000)
 }
 
 func NewKafkaProducer() *kafka.Producer {
 	configMap := &kafka.ConfigMap{
-		"bootstrap.servers": "gokafka:9092",
+		"bootstrap.servers": "go-kafka-full-cicle_kafka_1:9092",
 	}
 
 	p, err := kafka.NewProducer(configMap)
@@ -26,17 +37,17 @@ func NewKafkaProducer() *kafka.Producer {
 	return p
 }
 
-func Publish(msg string, topic string, producer *kafka.Producer, key []byte) error {
+func Publish(msg string, topic string, producer *kafka.Producer, key []byte,deliveryChan chan kafka.Event) error {
 	message:= &kafka.Message {
 		Value: []byte(msg),
 		TopicPartition: kafka.TopicPartition{
-			Topic: topic,
+			Topic: &topic,
 			Partition: kafka.PartitionAny,
 		},
 		Key: key,
 	}
 
-	err := producer.Produce(message, deliveryChan: nil)
+	err := producer.Produce(message, deliveryChan)
 
 	if err!= nil {
 		return err
